@@ -1,13 +1,11 @@
 const User = require("../models/User");
-exports.register = (req, res, next) => {
-    res.send('Register Route')
-}
+const bcrypt = require('bcryptjs')
 
-exports.login = async (req, res, next) => {
+exports.register = async (req, res, next) => {
     const {userName, email, password} = req.body
 
     try {
-        const  user = await User.create({
+        const user = await User.create({
             userName,
             email,
             password
@@ -18,6 +16,50 @@ exports.login = async (req, res, next) => {
             user
         })
     } catch (e) {
+        res.status(500).json({
+            success: false,
+            error: e.message
+        })
+    }
+
+}
+
+exports.login = async (req, res, next) => {
+    const {email, password} = req.body
+
+    if (!email || !password) {
+        res.status(400).json({
+            success: false,
+            error: 'please provide amil and password'
+        })
+    }
+
+    try {
+        const user = await User.findOne({email}).select('+password')
+
+        if (!user) {
+            res.status(400).json({
+                success: false,
+                error: 'Invalid credentials'
+            })
+        }
+
+        const isMatch = await user.matchPasswords(password)
+
+        if (!isMatch) {
+            res.status(400).json({
+                success: false,
+                error: 'Invalid credentials'
+            })
+        }
+
+        res.status(200).json({
+            success: true,
+            token: "fdhfedy6tgj",
+            user
+        })
+
+    } catch (e){
         res.status(500).json({
             success: false,
             error: e.message

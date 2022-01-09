@@ -2,7 +2,7 @@ const mongoose = require('mongoose')
 const validator = require('validator')
 const bcrypt = require('bcryptjs')
 
-const userSchema = new mongoose.Schema({
+const UserSchema = new mongoose.Schema({
     userName: {
         type: String,
         required: true,
@@ -36,7 +36,7 @@ const userSchema = new mongoose.Schema({
     resetPasswordExpire: Date
 })
 
-// userSchema.statics.findByCredentials = async (email, password) => {
+// UserSchema.statics.findByCredentials = async (email, password) => {
 //     const user = await User.findOne({ email })
 //
 //     if (!user) {
@@ -52,18 +52,21 @@ const userSchema = new mongoose.Schema({
 //     return user
 // }
 //
-userSchema.pre('save', async function (next) {
-    const user = this
+UserSchema.pre('save', async function (next) {
 
-    if (user.isModified('password')) {
+    if (this.isModified('password')) {
         const salt = await bcrypt.genSalt(10)
-        user.password = await bcrypt.hash(user.password, salt)
+        this.password = await bcrypt.hash(this.password, salt)
         next()
     }
 
     next()
 })
 
-const User = mongoose.model('User', userSchema)
+UserSchema.methods.matchPasswords = async function(password){
+    return await bcrypt.compare(password, this.password)
+}
+
+const User = mongoose.model('User', UserSchema)
 
 module.exports = User
