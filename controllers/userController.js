@@ -1,19 +1,25 @@
-const express = require("express");
-const router = express.Router();
-const User = require('../models/User')
+const User = require('../models/User');
 
-
-router.get('/users', async (req, res) => {
-
+const getUsers = async (req, res) => {
     try {
         const users = await User.find({})
         res.send(users)
     } catch (e) {
         res.status(500).send(e)
     }
-})
+}
 
-router.post('/users', async (req, res) => {
+const getUserById = async (req,res) => {
+    try {
+        const user = await User.findById(req.params.id);
+
+        res.send(user);
+    } catch (e) {
+        res.status(500).send(e)
+    }
+}
+
+const createUser = async (req, res) => {
     const user = new User(req.body)
 
     try {
@@ -22,9 +28,9 @@ router.post('/users', async (req, res) => {
     } catch (e) {
         res.status(500).send(e)
     }
-})
+}
 
-router.patch('/users/:id', async (req, res) => {
+const updateUser = async (req, res) => {
     const updates = Object.keys(req.body)
     const allowedUpdates = ['name', 'email', 'password', 'age']
     const isValidOperation = updates.every((update) => {
@@ -43,9 +49,9 @@ router.patch('/users/:id', async (req, res) => {
     } catch (e) {
         res.status(500).send(e)
     }
-})
+}
 
-router.delete('/users/:id', async (req, res) => {
+const deleteUser = async (req,res) => {
     try {
         const user = await User.findByIdAndDelete(req.params.id)
         if (!user) {
@@ -55,6 +61,12 @@ router.delete('/users/:id', async (req, res) => {
     } catch (e) {
         res.status(500).send()
     }
-})
+}
 
-module.exports = router;
+module.exports = {
+    getUsers,
+    getUserById,
+    createUser,
+    updateUser,
+    deleteUser
+}

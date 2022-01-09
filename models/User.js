@@ -3,7 +3,7 @@ const validator = require('validator')
 const bcrypt = require('bcryptjs')
 
 const userSchema = new mongoose.Schema({
-    name: {
+    userName: {
         type: String,
         required: true,
         trim: true
@@ -19,18 +19,10 @@ const userSchema = new mongoose.Schema({
             }
         }
     },
-    age: {
-        type: Number,
-        validate(value) {
-            if (value < 18) {
-                throw new Error('Age must be over 18.');
-            }
-        }
-    },
     password: {
         type: String,
         required: true,
-        trim: true,
+        select: false,
         validate(value) {
             if (value.length < 7) {
                 throw new Error('Password length must be at least 7 characters')
@@ -39,30 +31,34 @@ const userSchema = new mongoose.Schema({
                 throw new Error(`Password can't contain the word "password"`)
             }
         }
-    }
+    },
+    resetPasswordToken: String,
+    resetPasswordExpire: Date
 })
 
-userSchema.statics.findByCredentials = async (email, password) => {
-    const user = await User.findOne({ email })
-
-    if (!user) {
-        throw new Error('Unable to login')
-    }
-
-    const isMatch = await bcrypt.compare(password, user.password)
-
-    if (!isMatch) {
-        throw new Error('Unable to login')
-    }
-
-    return user
-}
-
+// userSchema.statics.findByCredentials = async (email, password) => {
+//     const user = await User.findOne({ email })
+//
+//     if (!user) {
+//         throw new Error('Unable to login')
+//     }
+//
+//     const isMatch = await bcrypt.compare(password, user.password)
+//
+//     if (!isMatch) {
+//         throw new Error('Unable to login')
+//     }
+//
+//     return user
+// }
+//
 userSchema.pre('save', async function (next) {
     const user = this
 
     if (user.isModified('password')) {
-        user.password = await bcrypt.hash(user.password, 8)
+        const salt = await bcrypt.genSalt(10)
+        user.password = await bcrypt.hash(user.password, salt)
+        next()
     }
 
     next()
